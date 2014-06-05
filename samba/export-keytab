@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Exports a keytab from a Samba 4 Domain Controller and encodes it in base64
+# so that it can be distributed via Salt.
+
+hostname="$1"
+
+function tmpfile {
+    mktemp --tmpdir "export-keytabs.XXXXXXXXXX"
+}
+
+princ="${hostname}\$"
+if [ -z "$hostname" ]; then
+    echo 'You must specify a hostname' >&2
+    exit 2
+fi
+keytab_temp="$(tmpfile)"
+if [ -z "$keytab_temp" ]; then
+    rm -f "${keytabs[@]}"
+    echo 'Failed to create source tempfile' >&2
+    exit 1
+fi
+samba-tool domain exportkeytab "$keytab_temp" --principal="$princ"
+base64 "$keytab_temp"
+shred -n 3 "$keytab_temp"
+rm -f "$keytab_temp"
