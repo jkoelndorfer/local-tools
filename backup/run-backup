@@ -1,0 +1,57 @@
+#!/usr/bin/python
+
+import argparse
+import socket
+import subprocess
+import sys
+
+import localutil
+
+# Runs an rsnapshot backup, e-mailing the address specified by the --alert-email
+# option if the backup fails.
+
+class RunBackupApp(object):
+    def __init__(self):
+        self.configure_options()
+
+    def configure_options(self):
+        a = argparse.ArgumentParser(
+            description='Run an rsnapshot backup'
+        )
+        a.add_argument('-a', '--alert-email', dest='alert_email',
+            help='Email address to alert if backup fails'
+        )
+        a.add_argument('--rsnapshot-path', default='/usr/bin/rsnapshot',
+            dest='rsnapshot_path',
+            help='Path to the rsnapshot program'
+        )
+        a.add_argument('-c', '--rsnapshot-config', dest='rsnapshot_config',
+            help='Path to the rsnapshot config file'
+        )
+        a.add_argument('interval',
+            help='Backup interval to run (e.g. hourly, daily, weekly)'
+        )
+        self.argparser = a
+
+    def parse_options(self, argv):
+        args = self.argparser.parse_args(argv)
+        return args
+
+    def run(self, argv):
+        args = self.parse_options(argv)
+        alert_fmt_vars = {
+            'config': args.rsnapshot_config,
+            'interval': args.interval,
+            'host': socket.gethostname().split('.')[0]
+        }
+        alert_subject = '{host}: rsnapshot {interval} run of {config} failed'\
+            .format(**alert_fmt_vars)
+        try:
+            subprocess.check_output([args.rsnapshot_path, '-c',
+                args.rsnapshot_config, args.interval], stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            localutil.send_email(args.alert_email, alert_subject,
+                e.output.decode('utf-8'))
+
+if __name__ == '__main__':
+    RunBackupApp().run(sys.argv[1:])
