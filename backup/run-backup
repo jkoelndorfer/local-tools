@@ -1,9 +1,11 @@
 #!/usr/bin/python
 
 import argparse
+import random
 import socket
 import subprocess
 import sys
+import time
 
 import localutil
 
@@ -32,6 +34,11 @@ class RunBackupApp(object):
             dest='timeout', type=int,
             help='Max time, in seconds, to allow backup to run'
         )
+        a.add_argument('-w', '--max-wait', default=600, metavar='MAX',
+            dest='max_wait', type=int,
+            help='Wait a random number of seconds (up to MAX) before starting '
+            'the backup.'
+        )
         a.add_argument('interval',
             help='Backup interval to run (e.g. hourly, daily, weekly)'
         )
@@ -50,6 +57,9 @@ class RunBackupApp(object):
         }
         alert_subject = '{host}: rsnapshot {interval} run of {config} failed'\
             .format(**alert_fmt_vars)
+        wait_time = random.randrange(0, args.max_wait)
+        print("Waiting {} seconds before beginning backup".format(wait_time))
+        time.sleep(wait_time)
         try:
             subprocess.check_output([args.rsnapshot_path, '-c',
                 args.rsnapshot_config, args.interval], stderr=subprocess.STDOUT,
