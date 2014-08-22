@@ -13,6 +13,9 @@ import localutil
 # option if the backup fails.
 
 class RunBackupApp(object):
+    RC_RSNAPSHOT_ERROR = 1
+    RC_RSNAPSHOT_WARNING = 2
+
     def __init__(self):
         self.configure_options()
 
@@ -66,8 +69,9 @@ class RunBackupApp(object):
                 args.rsnapshot_config, args.interval], stderr=subprocess.STDOUT,
                 timeout=args.timeout)
         except subprocess.CalledProcessError as e:
-            localutil.send_email(args.alert_email, alert_subject,
-                e.output.decode('utf-8'))
+            if e.returncode != self.RC_RSNAPSHOT_WARNING:
+                localutil.send_email(args.alert_email, alert_subject,
+                    e.output.decode('utf-8'))
 
 if __name__ == '__main__':
     RunBackupApp().run(sys.argv[1:])
