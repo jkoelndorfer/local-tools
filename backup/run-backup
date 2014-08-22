@@ -58,7 +58,8 @@ class RunBackupApp(object):
         alert_subject = '{host}: rsnapshot {interval} run of {config} failed'\
             .format(**alert_fmt_vars)
         wait_time = random.randrange(0, args.max_wait)
-        print("Waiting {} seconds before beginning backup".format(wait_time))
+        print("Waiting {} seconds before beginning backup".format(wait_time),
+            file=sys.stderr)
         time.sleep(wait_time)
         try:
             subprocess.check_output([args.rsnapshot_path, '-c',
