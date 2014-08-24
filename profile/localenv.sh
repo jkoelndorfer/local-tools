@@ -11,7 +11,10 @@ function pathmunge {
     pathvar="$2"
 
     if ! echo "$pathvar" | grep -q "$newcomponent"; then
-        echo "$pathvar:$newcomponent"
+        if [ -n "$pathvar" ]; then
+            echo -n "$pathvar:"
+        fi
+        echo "$newcomponent"
     else
         echo "$pathvar"
     fi
