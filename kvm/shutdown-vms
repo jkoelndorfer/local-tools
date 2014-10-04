@@ -1,0 +1,7 @@
+#!/bin/bash
+
+vm_list=$(virsh list | grep running | awk '{ print $2 }')
+
+for vm in $vm_list; do
+    virsh shutdown $vm
+done
