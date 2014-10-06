@@ -1,0 +1,95 @@
+#!/usr/bin/python3
+
+import argparse
+import enum
+import sys
+import urllib.request
+import urllib.parse
+
+
+class UpdateNamecheapDnsApp(object):
+    DESCRIPTION = '''
+    Updates a DNS record managed by Namecheap.
+    '''
+    UPDATE_URL = 'https://dynamicdns.park-your-domain.com/update'
+
+    def __init__(self):
+        self.configure_argparse()
+
+    def configure_argparse(self):
+        a = argparse.ArgumentParser(description=self.DESCRIPTION)
+        a.add_argument('--value', help='''The new value for the record. If none
+                        is specified, the IP accessing Namecheap will be
+                        used.''', required=False, default=None)
+        a.add_argument('password_file', help='''Path to the file containing the
+                       Namecheap Dynamic DNS password.''')
+        a.add_argument('record', help='The name of the record to update.')
+        self.argparser = a
+
+    @classmethod
+    def make_getstring(cls, params):
+        def q(x):
+            return urllib.parse.quote_plus(x.encode('utf-8'))
+        return '&'.join(['{}={}'.format(q(k), q(v)) for k, v in params.items()])
+
+    @classmethod
+    def get_host_domain(cls, record):
+        parts = record.split('.')
+        if len(parts) < 2:
+            raise InvalidRecordError('Record must have at least one "."')
+        host = '.'.join(parts[:-2])
+        domain = '.'.join(parts[-2:])
+        if host == '':
+            host = '@'
+        return (host, domain)
+
+    def parse_arguments(self, argv):
+        return self.argparser.parse_args(argv)
+
+    def read_password(self, path):
+        try:
+            with open(path, mode='rb') as f:
+                password = f.read().rstrip(b'\n')
+        except Exception as e:
+            raise PasswordReadError(str(e))
+        return password
+
+    def run(self, argv):
+        args = self.parse_arguments(argv)
+        try:
+            password = urllib.parse.quote_plus(
+                self.read_password(args.password_file)
+            )
+        except PasswordReadError as e:
+            print('Failed reading password from {}: {}'.format(
+                  args.password_file, e), file=sys.stderr)
+            return ExitCodes.PASSWORD_READ_FAILURE
+        try:
+            host, domain = self.get_host_domain(args.record)
+        except InvalidRecordError as e:
+            print(e, file=sys.stderr)
+            return ExitCodes.INVALID_RECORD
+        params = {
+            'password': password,
+            'host':     host,
+            'domain':   domain,
+        }
+        if args.value is not None:
+            params['ip'] = args.value
+        url = self.UPDATE_URL + '?' + self.make_getstring(params)
+        urllib.request.urlopen(url)
+        return ExitCodes.OK
+
+
+@enum.unique
+class ExitCodes(enum.IntEnum):
+    OK = 0
+    PASSWORD_READ_FAILURE = 1
+    INVALID_RECORD = 2
+
+
+class PasswordReadError(Exception): pass
+class InvalidRecordError(Exception): pass
+
+if __name__ == '__main__':
+    sys.exit(UpdateNamecheapDnsApp().run(sys.argv[1:]))
