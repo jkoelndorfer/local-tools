@@ -54,7 +54,7 @@ class SetCamApp(object):
 class Samsung_SNHP6410BN(object):
     def __init__(self, hostname):
         self.hostname = hostname
-        self._driver = webdriver.PhantomJS()
+        self._driver = webdriver.PhantomJS(service_log_path='/dev/null')
 
     def login(self, password):
         self._driver.get('http://{}'.format(self.hostname))
