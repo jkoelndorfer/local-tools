@@ -3,6 +3,7 @@
 import argparse
 import configparser
 from distutils.util import strtobool
+import os.path
 import sys
 
 from selenium import webdriver
@@ -59,7 +60,7 @@ class SetCamApp(object):
 class Samsung_SNHP6410BN(object):
     def __init__(self, hostname):
         self.hostname = hostname
-        self._driver = webdriver.PhantomJS(service_log_path='/dev/null')
+        self._driver = webdriver.PhantomJS(service_log_path=os.path.devnull)
 
     def login(self, password):
         self._driver.get('http://{}'.format(self.hostname))
