@@ -1,0 +1,104 @@
+#!/usr/bin/python
+
+import argparse
+from distutils.util import strtobool
+import sys
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions
+
+
+class SetCamApp(object):
+    def __init__(self):
+        self.configure_argparse()
+
+    def configure_argparse(self):
+        a = argparse.ArgumentParser()
+        boolhelp = '''If set, enables or disables {0}. By default, the setting
+        for {0} will not be changed.'''
+        boolmetavar = 'on/off'
+        a.add_argument(
+            'camera_hostname', help='The hostname or IP address of the camera.'
+        )
+        a.add_argument(
+            '-p', '--password-file', dest='password_file',
+            type=argparse.FileType('r'), required=True,
+            help='The path to a file containing the password for the camera.'
+        )
+        a.add_argument(
+            '--motion-events', dest='motion_events', default=None,
+            type=strtobool, metavar=boolmetavar,
+            help=boolhelp.format('motion events')
+        )
+        a.add_argument(
+            '--continuous-recording', dest='continuous_recording', default=None,
+            type=strtobool, metavar=boolmetavar,
+            help=boolhelp.format('continuous recording')
+        )
+        self.argparser = a
+
+    def run(self, argv):
+        args = self.argparser.parse_args(argv)
+        password = args.password_file.readline().rstrip('\n')
+        camera = Samsung_SNHP6410BN(args.camera_hostname)
+        camera.login(password)
+        camera.set(
+            motion_events=args.motion_events,
+            continuous_recording=args.continuous_recording
+        )
+        camera.logout()
+
+
+class Samsung_SNHP6410BN(object):
+    def __init__(self, hostname):
+        self.hostname = hostname
+        self._driver = webdriver.PhantomJS()
+
+    def login(self, password):
+        self._driver.get('http://{}'.format(self.hostname))
+        WebDriverWait(self._driver, 5,).until(expected_conditions.presence_of_all_elements_located)
+        # Frames?! Who wrote this trash?
+        self._driver.switch_to_frame('mainFrame')
+        password_field = self._driver.find_element(by=By.ID, value='private_key')
+        password_field.send_keys(password)
+        # The submit button doesn't have an ID. :-/
+        submit_button = self._driver.find_element(by=By.CLASS_NAME, value='btn_ty2')
+        submit_button.click()
+
+    def logout(self):
+        self._driver.close()
+
+    def set(self, motion_events=None, continuous_recording=None):
+        args = locals()
+        # For boolean controls, the value is a tuple containing the element
+        # names to click for (on, off).
+        element_ids = {
+            'motion_events': ('ea1', 'ea2'),
+            # These elements actually control sdcard mounting since there isn't
+            # an option directly on the web interface to control continuous
+            # recording
+            'continuous_recording': ('sdcard_mnt1', 'sdcard_mnt2')
+        }
+        self._driver.get(
+            'http://{}/pages/page_setup_video.php?login=true'
+            .format(self.hostname)
+        )
+        WebDriverWait(self._driver, 5,).until(expected_conditions.presence_of_all_elements_located)
+        for option in 'motion_events', 'continuous_recording':
+            if args[option] is not None:
+                self.setbool(element_ids[option], args[option])
+        savebutton = self._driver.find_element(by=By.CLASS_NAME, value='bType1')
+        savebutton.click()
+
+    def setbool(self, element_ids, setting):
+        if setting:
+            element_id = element_ids[0]
+        else:
+            element_id = element_ids[1]
+        element = self._driver.find_element(by=By.ID, value=element_id)
+        element.click()
+
+if __name__ == '__main__':
+    SetCamApp().run(sys.argv[1:])
