@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import argparse
+import configparser
 from distutils.util import strtobool
 import sys
 
@@ -23,9 +24,8 @@ class SetCamApp(object):
             'camera_hostname', help='The hostname or IP address of the camera.'
         )
         a.add_argument(
-            '-p', '--password-file', dest='password_file',
-            type=argparse.FileType('r'), required=True,
-            help='The path to a file containing the password for the camera.'
+            '-c', '--config-path', dest='config_path', required=True,
+            help='The path to a file containing credential configuration.'
         )
         a.add_argument(
             '--motion-events', dest='motion_events', default=None,
@@ -39,9 +39,14 @@ class SetCamApp(object):
         )
         self.argparser = a
 
+    def read_credentials(self, path, hostname):
+        c = configparser.ConfigParser()
+        c.read(path)
+        return c[hostname]['password']
+
     def run(self, argv):
         args = self.argparser.parse_args(argv)
-        password = args.password_file.readline().rstrip('\n')
+        password = self.read_credentials(args.config_path, args.camera_hostname)
         camera = Samsung_SNHP6410BN(args.camera_hostname)
         camera.login(password)
         camera.set(
