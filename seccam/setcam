@@ -22,7 +22,11 @@ class SetCamApp(object):
         for {0} will not be changed.'''
         boolmetavar = 'on/off'
         a.add_argument(
-            'camera_hostname', help='The hostname or IP address of the camera.'
+            '--camera', dest='camera_hostnames', action='append', default=['*'],
+            required=False,
+            help='''The hostname or IP address of the camera. May be specified
+            multiple times to operate on multiple cameras. Specify * for all
+            cameras. Defaults to *.'''
         )
         a.add_argument(
             '-c', '--config-path', dest='config_path', required=True,
@@ -40,21 +44,28 @@ class SetCamApp(object):
         )
         self.argparser = a
 
-    def read_credentials(self, path, hostname):
-        c = configparser.ConfigParser()
-        c.read(path)
-        return c[hostname]['password']
+    def get_camera_list(self):
+        return self.config.sections()
+
+    def get_password(self, hostname):
+        return self.config[hostname]['password']
 
     def run(self, argv):
         args = self.argparser.parse_args(argv)
-        password = self.read_credentials(args.config_path, args.camera_hostname)
-        camera = Samsung_SNHP6410BN(args.camera_hostname)
-        camera.login(password)
-        camera.set(
-            motion_events=args.motion_events,
-            continuous_recording=args.continuous_recording
-        )
-        camera.logout()
+        self.config = configparser.ConfigParser()
+        self.config.read(args.config_path)
+        camera_list = args.camera_hostnames
+        if '*' in camera_list:
+            camera_list = self.get_camera_list()
+        for hostname in camera_list:
+            password = self.get_password(hostname)
+            camera = Samsung_SNHP6410BN(hostname)
+            camera.login(password)
+            camera.set(
+                motion_events=args.motion_events,
+                continuous_recording=args.continuous_recording
+            )
+            camera.logout()
 
 
 class Samsung_SNHP6410BN(object):
