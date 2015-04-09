@@ -53,7 +53,7 @@ mkswap /dev/mapper/vg00-swap00
 swapon /dev/mapper/vg00-swap00
 
 curl "http://$SALT_MASTER/arch-mirrorlist" > /etc/pacman.d/mirrorlist
-pacstrap $BOOTSTRAP_DIR base grub salt
+pacstrap $BOOTSTRAP_DIR base grub salt-zmq
 
 genfstab -p $BOOTSTRAP_DIR >> $BOOTSTRAP_DIR/etc/fstab
 cat > $BOOTSTRAP_DIR/etc/mkinitcpio.conf << EOF
