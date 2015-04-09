@@ -14,6 +14,7 @@ if [ -z "$fqdn" ]; then
     exit 1
 fi
 
+pacman-key --refresh-keys
 hostname "$fqdn"
 
 for blockdev in /sys/class/block/*; do
