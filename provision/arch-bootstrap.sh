@@ -26,7 +26,7 @@ for blockdev in /sys/class/block/*; do
 done
 
 while read parted_cmd; do
-    parted -s /dev/vda $parted_cmd
+    parted -s "$target_blockdev" $parted_cmd
 done <<EOF
     mktable gpt
     mkpart primary    2048s  2097152s
