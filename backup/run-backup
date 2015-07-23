@@ -33,7 +33,7 @@ class RunBackupApp(object):
         a.add_argument('-c', '--rsnapshot-config', dest='rsnapshot_config',
             help='Path to the rsnapshot config file'
         )
-        a.add_argument('-t', '--timeout', default=120,
+        a.add_argument('-t', '--timeout', default=600,
             dest='timeout', type=int,
             help='Max time, in seconds, to allow backup to run'
         )
