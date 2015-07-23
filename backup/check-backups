@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+
+import argparse
+import configparser
+import os
+import stat
+import time
+
+
+class CheckBackupsApp(object):
+    def configure_options(self):
+        program_description = """
+            Verifies that rsnapshot backups in the given backup directory are recent. The backup directory should
+            contain one or more snapshot_root directories as specified in the rsnapshot configuration file.
+        """
+        a = argparse.ArgumentParser(description=program_description)
+        a.add_argument(
+            '-c', '--config-file',
+            help='path to the configuration file'
+        )
+        self.argument_parser = a
+
+    def parse_config(self, config_path):
+        c = configparser.ConfigParser()
+        c.read(config_path)
+
+
+class RsnapshotBackupChecker(object):
+    # KEYWORD_AGE is a dict mapping an rsnapshot backup interval keyword to the expected age of the most recent
+    # backup for that interval
+    #
+    # for example, we expect the most recent hourly backup to be no older than one hour (3600 seconds)
+    KEYWORD_AGE = dict()
+    KEYWORD_AGE['hourly'] = 60 * 60
+    KEYWORD_AGE['daily'] = KEYWORD_AGE['hourly'] * 24
+    KEYWORD_AGE['weekly'] = KEYWORD_AGE['daily'] * 7
+
+    def most_recent_rsnapshot_rotation(self, directory):
+        """
+        Returns the most recently rsnapshot rotation in directory
+        """
+        flist = map(lambda f: os.path.join(directory, f), os.listdir(directory))
+        dlist = filter(lambda f: stat.S_ISDIR(os.lstat(f).st_mode), flist)
+        rsnapshot_dlist = filter(lambda d: self.is_rsnapshot_backup_rotation(d), dlist)
+        try:
+            most_recently_modified_directory = max(rsnapshot_dlist, key=lambda f: os.stat(f)[stat.ST_MTIME])
+        except ValueError as e:
+            raise NotRsnapshotRootError('{0} does not seem to be an rsnapshot directory'.format(directory)) from e
+        return most_recently_modified_directory
+
+    @classmethod
+    def is_rsnapshot_backup_rotation(cls, path):
+        return cls.path_rsnapshot_keyword(path) in cls.KEYWORD_AGE.keys()
+
+    @classmethod
+    def path_rsnapshot_keyword(cls, path):
+        filename = os.path.basename(path)
+        return filename.split('.')[0]
+
+    def backup_ok(self, rsnapshot_root, grace_period=1800):
+        try:
+            directory_to_check = self.most_recent_rsnapshot_rotation(rsnapshot_root)
+        except NotRsnapshotRootError:
+            return False
+        rsnapshot_keyword = self.path_rsnapshot_keyword(directory_to_check)
+        directory_age = time.time() - os.stat(directory_to_check)[stat.ST_MTIME]
+        print('checking {0}'.format(directory_to_check))
+        return (directory_age < self.KEYWORD_AGE[rsnapshot_keyword])
+
+
+class NotRsnapshotRootError(Exception):
+    pass
+
+if __name__ == '__main__':
+    pass
