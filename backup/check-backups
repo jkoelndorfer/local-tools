@@ -3,19 +3,27 @@
 import argparse
 import configparser
 import os
+import socket
 import stat
+import sys
 import time
+
+import localutil
 
 
 class CheckBackupsApp(object):
+    def __init__(self):
+        self.configure_options()
+
     def configure_options(self):
         program_description = """
-            Verifies that rsnapshot backups in the given backup directory are recent. The backup directory should
-            contain one or more snapshot_root directories as specified in the rsnapshot configuration file.
+            Verifies that rsnapshot backups in the given backup directory (rsnapshot_master_root) are recent. The backup
+            directory should contain one or more snapshot_root directories as specified in the rsnapshot configuration
+            file.
         """
         a = argparse.ArgumentParser(description=program_description)
         a.add_argument(
-            '-c', '--config-file',
+            '-c', '--config-file', dest='config_path', default='check-backups.conf',
             help='path to the configuration file'
         )
         self.argument_parser = a
@@ -23,6 +31,34 @@ class CheckBackupsApp(object):
     def parse_config(self, config_path):
         c = configparser.ConfigParser()
         c.read(config_path)
+        self.rsnapshot_master_root = c.get('global', 'rsnapshot_master_root')
+        self.notify = c.get('global', 'notify')
+        try:
+            self.grace_period = c.getint('global', 'grace_period')
+        except configparser.NoOptionError:
+            self.grace_period = 1800
+
+    def run(self, argv):
+        self.configure_options()
+        args = self.argument_parser.parse_args(argv)
+        self.parse_config(args.config_path)
+        r = self.rsnapshot_master_root
+        rsnapshot_roots = filter(
+            lambda f: stat.S_ISDIR(os.lstat(f).st_mode),
+            map(lambda path: os.path.join(r, path), os.listdir(r))
+        )
+        bad_backups = list()
+        backup_checker = RsnapshotBackupChecker()
+        for root in rsnapshot_roots:
+            if not backup_checker.backup_ok(root, self.grace_period):
+                bad_backups.append(root)
+        if bad_backups:
+            hostname = socket.gethostname().split('.')[0]
+            subject = '{0}: outdated backup warning'.format(hostname)
+            message = 'The following backups are out of date:\n{0}'.format(
+                '\n'.join(bad_backups)
+            )
+            localutil.send_email(self.notify, subject, message)
 
 
 class RsnapshotBackupChecker(object):
@@ -57,14 +93,13 @@ class RsnapshotBackupChecker(object):
         filename = os.path.basename(path)
         return filename.split('.')[0]
 
-    def backup_ok(self, rsnapshot_root, grace_period=1800):
+    def backup_ok(self, rsnapshot_root, grace_period):
         try:
             directory_to_check = self.most_recent_rsnapshot_rotation(rsnapshot_root)
         except NotRsnapshotRootError:
             return False
         rsnapshot_keyword = self.path_rsnapshot_keyword(directory_to_check)
         directory_age = time.time() - os.stat(directory_to_check)[stat.ST_MTIME]
-        print('checking {0}'.format(directory_to_check))
         return (directory_age < self.KEYWORD_AGE[rsnapshot_keyword])
 
 
@@ -72,4 +107,4 @@ class NotRsnapshotRootError(Exception):
     pass
 
 if __name__ == '__main__':
-    pass
+    CheckBackupsApp().run(sys.argv[1:])
