@@ -64,14 +64,21 @@ class RunBackupApp(object):
         print("Waiting {} seconds before beginning backup".format(wait_time),
             file=sys.stderr)
         time.sleep(wait_time)
+        alert_message = None
         try:
             subprocess.check_output([args.rsnapshot_path, '-c',
                 args.rsnapshot_config, args.interval], stderr=subprocess.STDOUT,
                 timeout=args.timeout)
         except subprocess.CalledProcessError as e:
             if e.returncode != self.RC_RSNAPSHOT_WARNING:
-                localutil.send_email(args.alert_email, alert_subject,
-                    e.output.decode('utf-8'))
+                alert_message = e.output.decode('utf-8')
+        except subprocess.TimeoutExpired:
+            alert_message = 'Timeout expired while running backup!'
+        except Exception as e:
+            alert_message = 'Unhandled exception: {0}'.format(str(e))
+        if alert_message is not None:
+            localutil.send_email(args.alert_email, alert_subject, alert_message)
+
 
 if __name__ == '__main__':
     RunBackupApp().run(sys.argv[1:])
