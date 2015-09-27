@@ -1,0 +1,5 @@
+#!/bin/bash
+
+localenv_dir="$(dirname "$0")"
+. "$localenv_dir"/localenv.sh
+exec "$@"
