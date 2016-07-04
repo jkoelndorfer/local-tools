@@ -1,0 +1,11 @@
+[Unit]
+Description=Ping network gateway
+After=network.target
+
+[Service]
+ExecStart=/opt/local/tools/net/gatewayping
+KillMode=process
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

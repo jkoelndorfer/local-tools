@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# This script determines the network gateway and pings it.
+#
+# It is needed because I have some flaky Powerline AV2 adapters
+# that drop connectivity. Keeping network traffic flowing over
+# them consistently helps prevent dropouts.
+
+if ! typeset -p PING_INTERVAL >/dev/null 2>&1; then
+    PING_INTERVAL=0.5
+fi
+gateway="$(ip route | grep ^default | awk '{ print $3 }')"
+ping -i "$PING_INTERVAL" "$gateway" >/dev/null 2>&1 &
+ping_pid="$!"
+trap "kill $ping_pid" SIGHUP SIGINT SIGTERM
+wait "$ping_pid"
