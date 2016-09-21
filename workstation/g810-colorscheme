@@ -1,0 +1,38 @@
+#!/bin/bash
+
+g810_led='/opt/local/bin/g810-led'
+
+# Set default key color to light grey.
+$g810_led -a 666666
+
+$g810_led -k logo 000066
+
+$g810_led -g fkeys 666699
+
+for k in $(seq 0 9); do
+    $g810_led -k "$k" 006600
+done
+$g810_led -g numeric 006600
+
+$g810_led -k backspace 660000
+$g810_led -k escape 660000
+
+for k in {shift,ctrl,meta,alt}_{left,right} menu capslock; do
+    $g810_led -k "$k" 996300
+done
+
+for k in w a s d; do
+    $g810_led -k "$k" 999900
+done
+$g810_led -g arrows 999900
+
+$g810_led -g indicators aaaaaa
+$g810_led -g multimedia 8d00a6
+
+for k in print_screen scroll_lock pause insert home page_up delete end page_down; do
+    $g810_led -k "$k" 333333
+done
+
+$g810_led -k light ffffff
+$g810_led -k game ffffff
+$g810_led -k enter 000066
