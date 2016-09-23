@@ -2,37 +2,53 @@
 
 g810_led='/opt/local/bin/g810-led'
 
+blue='000066'
+dark_gray='333333'
+gray='666666'
+green='006600'
+light_blue='666699'
+light_gray='aaaaaa'
+orange='996300'
+purple='8d00a6'
+red='660000'
+white='ffffff'
+yellow='999900'
+
 # Set default key color to light grey.
-$g810_led -a 666666
+$g810_led -an "$gray"
 
-$g810_led -k logo 000066
+$g810_led -kn logo "$blue"
 
-$g810_led -g fkeys 666699
+$g810_led -gn fkeys "$light_blue"
 
 for k in $(seq 0 9); do
-    $g810_led -k "$k" 006600
+    $g810_led -kn "$k" "$green"
 done
-$g810_led -g numeric 006600
+$g810_led -gn numeric "$green"
+$g810_led -kn numenter "$blue"
 
-$g810_led -k backspace 660000
-$g810_led -k escape 660000
+$g810_led -kn backspace "$red"
+$g810_led -kn escape "$red"
 
-for k in {shift,ctrl,meta,alt}_{left,right} menu capslock; do
-    $g810_led -k "$k" 996300
+for k in {shift,ctrl,meta,alt}_{left,right} menu capslock num_lock scroll_lock; do
+    $g810_led -kn "$k" "$orange"
 done
 
 for k in w a s d; do
-    $g810_led -k "$k" 999900
+    $g810_led -kn "$k" "$yellow"
 done
-$g810_led -g arrows 999900
+$g810_led -gn arrows "$yellow"
 
-$g810_led -g indicators aaaaaa
-$g810_led -g multimedia 8d00a6
+$g810_led -gn indicators "$light_gray"
+$g810_led -gn multimedia "$purple"
 
-for k in print_screen scroll_lock pause insert home page_up delete end page_down; do
-    $g810_led -k "$k" 333333
+for k in print_screen pause insert home page_up end page_down; do
+    $g810_led -kn "$k" "$dark_gray"
 done
+$g810_led -kn delete "$red"
 
-$g810_led -k light ffffff
-$g810_led -k game ffffff
-$g810_led -k enter 000066
+$g810_led -kn light "$white"
+$g810_led -kn game "$white"
+$g810_led -kn enter "$blue"
+
+$g810_led -c
