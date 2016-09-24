@@ -1,5 +1,6 @@
 #!/bin/bash
 
+lockfile='/var/run/lock/subsys/g810-colorscheme'
 g810_led='/opt/local/bin/g810-led'
 
 blue='000066'
@@ -13,6 +14,11 @@ purple='8d00a6'
 red='660000'
 white='ffffff'
 yellow='999900'
+
+if ! mkdir "$lockfile" >/dev/null 2>&1; then
+    echo "Could not acquire lock at $lockfile" >&2
+    exit 1
+fi
 
 # Set default key color to light grey.
 $g810_led -an "$gray"
@@ -52,3 +58,6 @@ $g810_led -kn game "$white"
 $g810_led -kn enter "$blue"
 
 $g810_led -c
+
+sleep 10
+rm -rf "$lockfile"
