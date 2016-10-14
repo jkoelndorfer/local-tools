@@ -1,7 +1,0 @@
-#!/bin/bash
-
-vm_list=$(virsh list --all | grep 'shut off' | awk '{ print $2 }')
-
-for vm in $vm_list; do
-    virsh start $vm
-done
