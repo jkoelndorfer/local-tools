@@ -1,9 +1,7 @@
 #!/bin/bash
 
-# This script configures environment variables for local use.  Additionally,
-# $1 will be executed with the given arguments if $1 is specified.
-# The invoked program will be run in the configured environment.
-#
+# This script configures environment variables for local use.
+
 # We can change these variables to switch to a development environment.
 
 function pathmunge {
