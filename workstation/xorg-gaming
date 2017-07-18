@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# This script launches an alternate X server on my more
+# powerful GPU for gaming.
+#
+# You likely need to create an /etc/X11/Xwrapper.config file
+# and set `allowed_users = anybody` before this will work.
+
+primary_monitor='HDMI-1'
+gaming_monitor='DVI-D-1'
+
+# Xorg configuration that runs the X server on the desired
+# GPU for gaming.
+gaming_xorg_conf='xorg.nvidia.conf'
+
+# Position of gaming monitor relative to primary monitor.
+# Could be "left-of" or "right-of", or another keyword
+# supported by xrandr.
+gaming_monitor_position='right-of'
+
+xrandr --output "$gaming_monitor" --off
+synergys --config "$DOTFILE_DIR/gaming/desktop-synergy.conf"
+xinit -- :10 -config "$gaming_xorg_conf" -sharevts
+xrandr --output "$gaming_monitor" --auto --"$gaming_monitor_position" "$primary_monitor"
+pkill synergys
