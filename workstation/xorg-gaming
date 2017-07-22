@@ -18,6 +18,22 @@ gaming_xorg_conf='xorg.nvidia.conf'
 # supported by xrandr.
 gaming_monitor_position='right-of'
 
+gpu_device='0000:01:00.0'
+gpu_audio_device='0000:01:00.1'
+
+if sudo rmmod vfio_pci 2>&1 | grep -q 'in use'; then
+    echo 'Failed to remove vfio_pci module, is the GPU in use?'
+    exit 1
+fi
+if ! lsmod | grep -q 'nvidia'; then
+    sudo bash <<EOF
+        echo '' > /sys/bus/pci/devices/$gpu_device/driver_override
+        echo '' > /sys/bus/pci/devices/$gpu_audio_device/driver_override
+        modprobe nvidia
+        modprobe nvidia_modeset
+        modprobe nvidia_drm
+EOF
+fi
 xrandr --output "$gaming_monitor" --off
 synergys --config "$DOTFILE_DIR/gaming/desktop-synergy.conf"
 xinit -- :10 -config "$gaming_xorg_conf" -sharevts
