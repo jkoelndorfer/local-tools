@@ -23,6 +23,12 @@ if rmmod nvidia_drm nvidia_modeset nvidia 2>&1 | grep -q 'in use'; then
     exit 1
 fi
 
+rmmod vfio_pci
+for dev in $vfio_gpu_device $vfio_gpu_audio $vfio_usb_device; do
+    echo "vfio-pci" > /sys/bus/pci/devices/$dev/driver_override
+done
+modprobe vfio_pci
+
 for arg in '-t' '-f' '-d' '-s' '-c' '-m' '-u' '-l' '-v' '-x'; do
     ulimit $arg unlimited
 done
@@ -42,7 +48,7 @@ function configure_networking {
 }
 
 function default_boot {
-    qemu-system-x86_64 \
+    taskset --all-tasks --cpu-list 2-11 nice -n -10 qemu-system-x86_64 \
         -name win10 \
         -nodefaults \
         -nodefconfig \
@@ -79,5 +85,10 @@ function default_boot {
         -net tap,ifname=win10,script=no,downscript=no
 }
 
+pkill synergys
+../single-monitor
+sudo -u "$runas" -i /bin/bash -c 'synergys --config "$DOTFILE_DIR/gaming/desktop-synergy.conf"'
 configure_networking
 default_boot
+../dual-monitor
+pkill synergys
