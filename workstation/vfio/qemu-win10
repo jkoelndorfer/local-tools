@@ -23,6 +23,8 @@ if rmmod nvidia_drm nvidia_modeset nvidia 2>&1 | grep -q 'in use'; then
     exit 1
 fi
 
+echo "$vfio_usb_device" > /sys/bus/pci/devices/$vfio_usb_device/driver/unbind
+
 rmmod vfio_pci
 for dev in $vfio_gpu_device $vfio_gpu_audio $vfio_usb_device; do
     echo "vfio-pci" > /sys/bus/pci/devices/$dev/driver_override
