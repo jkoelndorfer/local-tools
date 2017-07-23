@@ -36,6 +36,7 @@ done
 function configure_networking {
     if ! ip link show dev qemubr0 >/dev/null 2>&1; then
         ip link add qemubr0 type bridge
+        ip link set dev qemubr0 up
         ip addr add 172.20.0.1/24 dev qemubr0
         ip route add 172.20.0.0/24 dev qemubr0 via 172.20.0.1
         sysctl net.ipv4.ip_forward=1
