@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# Taken and adapted from:
+# https://www.redhat.com/archives/vfio-users/2016-July/msg00066.html
+
+VM_NAME='windows8'
+VM_CPUS='2-11'
+VM_IP='10.0.0.66'
+HUGEPAGES=16
+LOGGED_IN_USER="$(who | grep -E '\(:[0-9]+\)' | awk '{ print $1 }' | head -n 1)"
+LOGGED_IN_USER_HOME="$(getent passwd "$LOGGED_IN_USER" | awk -F: '{ print $6 }')"
+PRIMARY_DISPLAY='DVI-I-1'
+VM_DISPLAY='DVI-D-0'
+VM_DISPLAY_POSITION='right-of'
+SYNERGY_CONFIG_PATH="$LOGGED_IN_USER_HOME/.synergy.conf"
+VBOX_MODULES="$(echo vbox{pci,net{flt,adp},drv})"
+
+if [[ "$UID" -ne 0 ]]; then
+    echo 'This script must be run as root' >&2
+    exit 1
+fi
+
+if [[ "$(virsh domstate $VM_NAME)" == 'running' ]]; then
+    echo "VM $VM_NAME already running"
+    exit 2
+fi
+
+# Nix VirtualBox modules. These will keep KVM from starting the VM.
+vbox_rc=0
+for m in $VBOX_MODULES; do
+    if lsmod | grep -q "^$m\s"; then
+        if ! rmmod "$m"; then
+            echo "VirtualBox module '$m' could not be unloaded" >&2
+            vbox_rc=1
+        fi
+    fi
+done
+
+if [[ "$vbox_rc" -ne 0 ]]; then
+    exit "$vbox_rc"
+fi
+
+# Note that allocating hugepages after boot has a chance to fail. If continuous memory
+# cannot be allocated, a reboot will be required. Recommended to set hugepages
+# on the kernel command line.
+STARTING_HUGEPAGES="$(cat /proc/sys/vm/nr_hugepages)"
+if [[ "$STARTING_HUGEPAGES" -lt "$HUGEPAGES" ]]; then
+    # drop caches and compact memory to free up continuous memory for huge pages
+    echo 3 > /proc/sys/vm/drop_caches
+    echo 1 > /proc/sys/vm/compact_memory
+
+    echo "$HUGEPAGES" > /proc/sys/vm/nr_hugepages
+    ALLOC_PAGES="$(cat /proc/sys/vm/nr_hugepages)"
+
+    if [[ "$ALLOC_PAGES" -lt "$HUGEPAGES" ]]; then
+      echo 'Not able to allocate hugepages'
+      echo "$STARTING_HUGEPAGES" > /proc/sys/vm/nr_hugepages
+      exit 1
+    fi
+fi
+
+STARTING_RT_RUNTIME="$(cat /proc/sys/kernel/sched_rt_runtime_us)"
+echo -1 > /proc/sys/kernel/sched_rt_runtime_us
+
+xrandr --output "$VM_DISPLAY" --off
+
+# Maximum Powah!
+echo 'performance' | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor > /dev/null
+
+# THP can allegedly result in OS jitter. Better keep it off.
+echo 'never' > /sys/kernel/mm/transparent_hugepage/enabled
+
+su --login "$LOGGED_IN_USER" --command "/usr/bin/synergys -c $SYNERGY_CONFIG_PATH" > /dev/null
+
+virsh start "$VM_NAME"
+
+bash >/dev/null 2>&1 <<EOF &
+    sleep 10
+    while [[ "\$(virsh domstate $VM_NAME)" = 'running' ]]; do
+      sleep 1
+    done
+
+    pkill --uid "$LOGGED_IN_USER" --signal SIGINT synergys
+
+    echo 'powersave' | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor > /dev/null
+
+    echo "$STARTING_RT_RUNTIME" > /proc/sys/kernel/sched_rt_runtime_us
+    echo "$STARTING_HUGEPAGES" > /proc/sys/vm/nr_hugepages
+    xrandr --output "$VM_DISPLAY" --auto --"$VM_DISPLAY_POSITION" "$PRIMARY_DISPLAY"
+EOF
+disown

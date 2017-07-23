@@ -1,0 +1,21 @@
+This document highlights the high level important bits of getting a KVM VFIO setup working
+in order to pass a graphics card through to a Windows guest to achieve near-native
+performance when gaming.
+
+0. See the Arch Wiki (https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF) for a
+   comprehensive guide.
+
+1. See windows8.xml for libvirt virtual machine settings. Note that the path to the Pulseaudio
+   socket (QEMU_PA_SERVER) will likely need to be adjusted.
+
+2. Command line for kernel boot:
+   intel_iommu=on hugepagesz=1G default_hugepagesz=1G nohz_full=2-11 rcu_nocbs=2-11
+
+3. Enable message-signaled interrupts (MSI) for the graphics card device. This has to be done
+   in the registry inside the Windows virtual machine.
+
+4. Configure qemu (/etc/libvirt/qemu.conf) to run the virtual machine as the user who will be
+   playing games in the virtual machine. This is primarily to ensure sound works via Pulseaudio.
+
+5. Install the cpuset package from the AUR to allow reserving CPUs for the virtual machine
+   only while gaming.

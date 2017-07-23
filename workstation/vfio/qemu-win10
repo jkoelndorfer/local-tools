@@ -1,0 +1,83 @@
+#!/bin/bash
+
+cd "$(dirname "$0")"
+# User to run the virtual machine as
+runas="$SUDO_USER"
+runas_user_home="$(getent passwd "$runas" | awk -F: '{ print $6 }')"
+vm_net_interface=wlp6s0
+vm_lvm_volume="/dev/mapper/vg--kvm-win10"
+uefi_code_path="/usr/share/edk2/ovmf/OVMF_CODE.fd"
+uefi_vars_path="$runas_user_home/.vfio/ovmf_vars_x64_win10.bin"
+# A floppy image containing VirtIO disk drivers. Needed during the
+# install process for Windows.
+virtio_drivers="$runas_user_home/.vfio/virtio-win_amd64.vfd"
+disk_iso="$runas_user_home/.vfio/en_windows_10_multiple_editions_x64_dvd_6846432.iso"
+
+# PCI bus IDs from /sys/bus/pci/devices or `lspci -D`
+vfio_gpu_device='0000:01:00.0'
+vfio_gpu_audio='0000:01:00.1'
+vfio_usb_device='0000:05:00.0'
+
+if rmmod nvidia_drm nvidia_modeset nvidia 2>&1 | grep -q 'in use'; then
+    echo 'Failed to remove NVIDIA kernel modules, is the GPU in use?' >&2
+    exit 1
+fi
+
+for arg in '-t' '-f' '-d' '-s' '-c' '-m' '-u' '-l' '-v' '-x'; do
+    ulimit $arg unlimited
+done
+
+function configure_networking {
+    if ! ip link show dev qemubr0 >/dev/null 2>&1; then
+        ip link add qemubr0 type bridge
+        ip addr add 172.20.0.1/24 dev qemubr0
+        ip route add 172.20.0.0/24 dev qemubr0 via 172.20.0.1
+        sysctl net.ipv4.ip_forward=1
+        sysctl net.ipv4.conf."$vm_net_interface".forwarding=1
+        sysctl net.ipv4.conf.qemubr0.forwarding=1
+        ip tuntap add dev win10 mode tap
+        ip link set dev win10 up promisc on
+        ip link set dev win10 master qemubr0
+    fi
+}
+
+function default_boot {
+    qemu-system-x86_64 \
+        -name win10 \
+        -nodefaults \
+        -nodefconfig \
+        -no-user-config \
+        -boot d \
+        -runas "$runas" \
+        -cpu host,kvm=off,hv_vapic,hv_time,hv_relaxed,hv_spinlocks=0x1fff,hv_vendor_id=SuckItNvidia \
+        -smp cpus=8,sockets=1,cores=4,threads=2 \
+        -enable-kvm \
+        -machine q35,accel=kvm,mem-merge=off \
+        -m 16384 \
+        -mem-path /dev/hugepages \
+        -mem-prealloc \
+        -realtime mlock=on \
+        -rtc base=localtime,clock=host,driftfix=none \
+        -drive file=$uefi_code_path,if=pflash,format=raw,readonly=on \
+        -drive file=$uefi_vars_path,if=pflash,format=raw \
+        -vga none \
+        -nographic \
+        -serial none \
+        -parallel none \
+        -balloon none \
+        -device vfio-pci,host=$vfio_gpu_device \
+        -device vfio-pci,host=$vfio_gpu_audio \
+        -device vfio-pci,host=$vfio_usb_device \
+        -drive file="$vm_lvm_volume",if=none,format=raw,cache=none,id=disk0 \
+        -device virtio-blk-pci,scsi=off,drive=disk0,id=virtio-disk0,bootindex=1 \
+        \
+        -device ahci,id=ahci \
+        -drive file="$disk_iso",if=none,format=raw,cache=none,id=cdrom,readonly=on \
+        -device ide-cd,bus=ahci.1,drive=cdrom,id=sata-cdrom \
+        \
+        -net nic,model=virtio \
+        -net tap,ifname=win10,script=no,downscript=no
+}
+
+configure_networking
+default_boot
