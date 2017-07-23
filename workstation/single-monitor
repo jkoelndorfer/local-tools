@@ -1,0 +1,6 @@
+#!/bin/bash
+
+cd "$(dirname "$0")"
+source monitorsrc
+
+xrandr --output "$gaming_monitor" --off
