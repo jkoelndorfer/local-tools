@@ -94,6 +94,7 @@ function default_boot {
         -soundhw hda
 }
 
+echo 'never' > /sys/kernel/mm/transparent_hugepage/enabled
 pkill synergys
 ../single-monitor
 sudo -u "$runas" -i /bin/bash -c 'synergys --config "$DOTFILE_DIR/gaming/desktop-synergy.conf"'
