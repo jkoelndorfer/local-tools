@@ -95,6 +95,7 @@ function default_boot {
 }
 
 echo 'never' > /sys/kernel/mm/transparent_hugepage/enabled
+echo 'performance' | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor > /dev/null
 pkill synergys
 ../single-monitor
 sudo -u "$runas" -i /bin/bash -c 'synergys --config "$DOTFILE_DIR/gaming/desktop-synergy.conf"'
@@ -102,3 +103,4 @@ configure_networking
 default_boot
 ../dual-monitor
 pkill synergys
+echo 'powersave' | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor > /dev/null
