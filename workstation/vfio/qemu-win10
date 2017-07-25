@@ -6,7 +6,7 @@ runas="$SUDO_USER"
 runas_user_home="$(getent passwd "$runas" | awk -F: '{ print $6 }')"
 vm_net_interface=wlp6s0
 vm_lvm_volume="/dev/mapper/vg--kvm-win10"
-uefi_code_path="/usr/share/edk2/ovmf/OVMF_CODE.fd"
+uefi_code_path="$runas_user_home/.vfio/OVMF_CODE.fd"
 uefi_vars_path="$runas_user_home/.vfio/ovmf_vars_x64_win10.bin"
 # A floppy image containing VirtIO disk drivers. Needed during the
 # install process for Windows.
