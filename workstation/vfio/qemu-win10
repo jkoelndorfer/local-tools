@@ -51,6 +51,9 @@ function configure_networking {
         ip tuntap add dev win10 mode tap
         ip link set dev win10 up promisc on
         ip link set dev win10 master qemubr0
+        # Use a static hardware address so Windows doesn't think it's on a new network
+        # every boot.
+        ip link set dev win10 address '12:c7:b3:1c:ea:34'
     fi
 }
 
