@@ -1,5 +1,5 @@
-primary_monitor='HDMI-1'
-gaming_monitor='DVI-D-1'
+primary_monitor='DVI-D-1'
+gaming_monitor='HDMI-1'
 
 # Position of gaming monitor relative to primary monitor.
 # Could be "left-of" or "right-of", or another keyword
