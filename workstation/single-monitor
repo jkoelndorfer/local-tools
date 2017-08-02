@@ -3,4 +3,5 @@
 cd "$(dirname "$0")"
 source monitorsrc
 
+./hdmisw.py 2
 xrandr --output "$gaming_monitor" --off
