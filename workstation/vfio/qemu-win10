@@ -4,6 +4,7 @@ cd "$(dirname "$0")"
 # User to run the virtual machine as
 runas="$SUDO_USER"
 runas_user_home="$(getent passwd "$runas" | awk -F: '{ print $6 }')"
+monitor_dev="unix:/run/user/$(id -u "$runas")/qemu.monitor"
 vm_net_interface=wlp6s0
 vm_lvm_volume="/dev/mapper/vg--kvm-win10"
 uefi_code_path="$runas_user_home/.vfio/OVMF_CODE.fd"
@@ -94,7 +95,9 @@ function default_boot {
         -net nic,model=virtio \
         -net tap,ifname=win10,script=no,downscript=no \
         \
-        -soundhw hda
+        -soundhw hda \
+        \
+        -qmp "$monitor_dev",server,nowait
 }
 
 echo 'never' > /sys/kernel/mm/transparent_hugepage/enabled
