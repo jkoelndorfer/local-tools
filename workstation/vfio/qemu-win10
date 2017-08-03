@@ -1,10 +1,12 @@
 #!/bin/bash
 
+set -m
+
 cd "$(dirname "$0")"
 # User to run the virtual machine as
 runas="$SUDO_USER"
 runas_user_home="$(getent passwd "$runas" | awk -F: '{ print $6 }')"
-monitor_dev="unix:/run/user/$(id -u "$runas")/qemu.monitor"
+monitor_dev="/run/user/$(id -u "$runas")/qemu.monitor"
 vm_net_interface=wlp6s0
 vm_lvm_volume="/dev/mapper/vg--kvm-win10"
 uefi_code_path="$runas_user_home/.vfio/OVMF_CODE.fd"
@@ -59,7 +61,8 @@ function configure_networking {
 }
 
 function default_boot {
-    taskset --all-tasks --cpu-list 2-11 nice -n -10 qemu-system-x86_64 \
+    qemu-system-x86_64 \
+        -S \
         -name win10 \
         -nodefaults \
         -nodefconfig \
@@ -67,7 +70,7 @@ function default_boot {
         -boot d \
         -runas "$runas" \
         -cpu host,kvm=off,hv_vapic,hv_time,hv_relaxed,hv_spinlocks=0x1fff,hv_vendor_id=SuckItNvidia \
-        -smp cpus=8,sockets=1,cores=4,threads=2 \
+        -smp cpus=4,sockets=1,cores=4,threads=1 \
         -enable-kvm \
         -machine q35,accel=kvm,mem-merge=off \
         -m 16384 \
@@ -86,7 +89,8 @@ function default_boot {
         -device vfio-pci,host=$vfio_gpu_audio \
         -device vfio-pci,host=$vfio_usb_device \
         -drive file="$vm_lvm_volume",if=none,format=raw,cache=none,id=disk0 \
-        -device virtio-blk-pci,scsi=off,drive=disk0,id=virtio-disk0,bootindex=1 \
+        -object iothread,id=iothread0 \
+        -device virtio-blk-pci,scsi=off,drive=disk0,id=virtio-disk0,bootindex=1,iothread=iothread0 \
         \
         -device ahci,id=ahci \
         -drive file="$disk_iso",if=none,format=raw,cache=none,id=cdrom,readonly=on \
@@ -97,9 +101,12 @@ function default_boot {
         \
         -soundhw hda \
         \
-        -qmp "$monitor_dev",server,nowait
+        -qmp unix:"$monitor_dev",server,nowait &
+    ./cpupin.py --iothread-cpus 2 --smp-cpus 4,6,8,10 "$monitor_dev"
+    fg
 }
 
+echo '-1' > /proc/sys/kernel/sched_rt_runtime_us
 echo 'never' > /sys/kernel/mm/transparent_hugepage/enabled
 echo 'performance' | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor > /dev/null
 pkill synergys
