@@ -1,7 +1,7 @@
 #!/bin/bash
 
 lockfile='/var/run/lock/subsys/g810-colorscheme'
-g810_led='/opt/local/bin/g810-led'
+g810_led='g810-led'
 
 blue='000066'
 dark_gray='333333'
