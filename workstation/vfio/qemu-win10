@@ -113,6 +113,7 @@ pkill synergys
 ../single-monitor
 sudo -u "$runas" -i /bin/bash -c 'synergys --config "$DOTFILE_DIR/gaming/desktop-synergy.conf"'
 configure_networking
+systemctl start smbd
 default_boot
 ../dual-monitor
 pkill synergys
