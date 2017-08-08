@@ -101,8 +101,15 @@ function default_boot {
         -soundhw ac97 \
         \
         -qmp unix:"$monitor_dev",server,nowait &
-    ./cpupin.py --iothread-cpus 2 --smp-cpus 4,6,8,10 "$monitor_dev"
-    fg
+}
+
+function wait_for_monitor {
+    tries=0
+    max_tries=10
+    while [[ ( ! -S "$monitor_dev" ) || "$tries" -gt "$max_tries" ]]; do
+        tries="$(($tries + 1))"
+        sleep 0.25
+    done
 }
 
 echo '-1' > /proc/sys/kernel/sched_rt_runtime_us
@@ -114,6 +121,9 @@ sudo -u "$runas" -i /bin/bash -c 'synergys --config "$DOTFILE_DIR/gaming/desktop
 configure_networking
 systemctl start smbd
 default_boot
+wait_for_monitor
+./cpupin.py --iothread-cpus 2 --smp-cpus 4,6,8,10 "$monitor_dev"
+fg
 ../dual-monitor
 pkill synergys
 echo 'powersave' | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor > /dev/null
