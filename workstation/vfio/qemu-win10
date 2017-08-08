@@ -21,9 +21,8 @@ vfio_gpu_device='0000:01:00.0'
 vfio_gpu_audio='0000:01:00.1'
 vfio_usb_device='0000:05:00.0'
 
-export QEMU_AUDIO_DRV=pa
+export QEMU_AUDIO_DRV=alsa
 export QEMU_PA_SERVER=/run/user/5000/pulse/native
-export QEMU_PA_SAMPLES=6144
 
 if rmmod nvidia_drm nvidia_modeset nvidia 2>&1 | grep -q 'in use'; then
     echo 'Failed to remove NVIDIA kernel modules, is the GPU in use?' >&2
@@ -99,7 +98,7 @@ function default_boot {
         -net nic,model=virtio \
         -net tap,ifname=win10,script=no,downscript=no \
         \
-        -soundhw hda \
+        -soundhw ac97 \
         \
         -qmp unix:"$monitor_dev",server,nowait &
     ./cpupin.py --iothread-cpus 2 --smp-cpus 4,6,8,10 "$monitor_dev"
