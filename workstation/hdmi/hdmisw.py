@@ -40,7 +40,8 @@ class IogearGHSW8141:
     def previous_input(self):
         self.send_command("sw -")
 
+iog = IogearGHSW8141("/dev/ttyUSB0")
+
 if __name__ == "__main__":
-    iog = IogearGHSW8141("/dev/ttyUSB0")
     iog.set_input(int(sys.argv[1]))
     iog.close()

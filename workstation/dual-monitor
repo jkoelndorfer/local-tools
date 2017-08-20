@@ -3,5 +3,5 @@
 cd "$(dirname "$0")"
 source monitorsrc
 
-./hdmisw.py "$gaming_monitor_linux_hdmi_input"
+hdmi/hdmisw.py "$gaming_monitor_linux_hdmi_input"
 xrandr --output "$gaming_monitor" --auto --"$gaming_monitor_position" "$primary_monitor"
