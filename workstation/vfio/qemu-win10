@@ -104,7 +104,7 @@ function default_boot {
         -net nic,model=virtio \
         -net tap,ifname=win10,script=no,downscript=no \
         \
-        -soundhw ac97 \
+        -device AC97 \
         \
         -qmp unix:"$monitor_dev",server,nowait &
 }
