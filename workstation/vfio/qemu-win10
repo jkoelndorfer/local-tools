@@ -77,6 +77,7 @@ function default_boot {
         -mem-prealloc \
         -realtime mlock=on \
         -rtc base=localtime,clock=host,driftfix=none \
+        -no-hpet \
         -drive file=$uefi_code_path,if=pflash,format=raw,readonly=on \
         -drive file=$uefi_vars_path,if=pflash,format=raw \
         -vga none \
