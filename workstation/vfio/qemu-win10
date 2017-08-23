@@ -68,7 +68,7 @@ function default_boot {
         -no-user-config \
         -boot d \
         -runas "$runas" \
-        -cpu host,kvm=off,hv_vapic,hv_time,hv_relaxed,hv_spinlocks=0x1fff,hv_vendor_id=SuckItNvidia \
+        -cpu host,kvm=off,hv_time,hv_relaxed,hv_spinlocks=0x1fff,hv_vendor_id=SuckItNvidia \
         -smp cpus=4,sockets=1,cores=4,threads=1 \
         -enable-kvm \
         -machine q35,accel=kvm,mem-merge=off \
