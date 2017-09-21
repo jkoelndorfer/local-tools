@@ -1,0 +1,6 @@
+#!/bin/bash
+
+cd "$(dirname "$0")"
+source ./inputdevrc
+disable_xorg_input_devices_on :10
+enable_xorg_input_devices_on :0

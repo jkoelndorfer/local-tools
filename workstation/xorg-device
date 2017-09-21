@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -euo pipefail
+
+state="$1"
+device_name="$2"
+
+device_ids="$(xinput --list | grep -E -o "${device_name}\s+id=[0-9]+" | grep -E -o 'id=[0-9]+' | awk -F= '{ print $2 }')"
+
+if [[ "$state" == "enable" ]]; then
+    xinput_arg="--enable"
+elif [[ "$state" == "disable" ]]; then
+    xinput_arg="--disable"
+else
+    echo "Invalid state '$state'; must be 'enable' or 'disable'" >&2
+    exit 1
+fi
+
+for d in $device_ids; do
+    xinput "$xinput_arg" "$d"
+done

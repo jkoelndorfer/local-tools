@@ -1,0 +1,26 @@
+#!/bin/bash
+
+xorg_input_devices=(
+    "SteelSeries SteelSeries Rival 700 Gaming Mouse"
+    "Logitech Gaming Keyboard G810"
+)
+
+__inputdevrc_dir="$(dirname "$BASH_SOURCE[0]")"
+
+function enable_xorg_input_devices_on {
+    xorg_display="$1"
+    export DISPLAY="$xorg_display"
+
+    for d in ${xorg_input_devices[@]}; do
+        "$__inputdevrc_dir/../xorg-device" enable "$d"
+    done
+}
+
+function disable_xorg_input_devices_on {
+    xorg_display="$1"
+    export DISPLAY="$xorg_display"
+
+    for d in ${xorg_input_devices[@]}; do
+        "$__inputdevrc_dir/../xorg-device" disable "$d"
+    done
+}

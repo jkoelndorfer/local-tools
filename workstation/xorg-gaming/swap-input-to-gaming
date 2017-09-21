@@ -1,0 +1,10 @@
+#!/bin/bash
+
+cd "$(dirname "$0")"
+source ./inputdevrc
+if ! DISPLAY=:10 xinput --list >/dev/null 2>&1; then
+    echo 'Gaming Xorg session does not appear to be active! Doing nothing.' >&2
+    exit 1
+fi
+disable_xorg_input_devices_on :0
+enable_xorg_input_devices_on :10
