@@ -10,8 +10,8 @@
 # GPU for gaming.
 gaming_xorg_conf='xorg.nvidia.conf'
 
-gpu_device='0000:01:00.0'
-gpu_audio_device='0000:01:00.1'
+gpu_device='0000:03:00.0'
+gpu_audio_device='0000:03:00.1'
 
 if sudo rmmod vfio_pci 2>&1 | grep -q 'in use'; then
     echo 'Failed to remove vfio_pci module, is the GPU in use?'

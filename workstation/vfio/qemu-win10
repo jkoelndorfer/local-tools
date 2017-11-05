@@ -17,9 +17,9 @@ virtio_drivers="$runas_user_home/.vfio/virtio-win_amd64.vfd"
 disk_iso="$runas_user_home/.vfio/en_windows_10_multiple_editions_x64_dvd_6846432.iso"
 
 # PCI bus IDs from /sys/bus/pci/devices or `lspci -D`
-vfio_gpu_device='0000:01:00.0'
-vfio_gpu_audio='0000:01:00.1'
-vfio_usb_device='0000:05:00.0'
+vfio_gpu_device='0000:03:00.0'
+vfio_gpu_audio='0000:03:00.1'
+vfio_usb_device='0000:02:00.0'
 
 export QEMU_AUDIO_DRV=alsa
 export QEMU_ALSA_DAC_PERIOD_SIZE=512
@@ -34,10 +34,8 @@ if rmmod nvidia_drm nvidia_modeset nvidia 2>&1 | grep -q 'in use'; then
     exit 1
 fi
 
-echo "$vfio_usb_device" > /sys/bus/pci/devices/$vfio_usb_device/driver/unbind
-
 rmmod vfio_pci
-for dev in $vfio_gpu_device $vfio_gpu_audio $vfio_usb_device; do
+for dev in $vfio_gpu_device $vfio_gpu_audio; do
     echo "vfio-pci" > /sys/bus/pci/devices/$dev/driver_override
 done
 modprobe vfio_pci
