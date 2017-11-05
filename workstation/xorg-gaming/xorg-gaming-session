@@ -7,4 +7,5 @@ source ./inputdevrc
 mouseaccel off
 
 disable_xorg_input_devices_on "$DISPLAY"
-openbox-session
+feh --bg-center "$HOME/ownCloud/personal/data/wallpapers/space/WallpaperFusion-a-long-way-from-home-3840x1080-M2.jpg"
+openbox
