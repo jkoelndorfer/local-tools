@@ -2,5 +2,9 @@
 
 cd "$(dirname "$0")"
 source ./inputdevrc
+
+# mouseaccel comes from dotfiles
+mouseaccel off
+
 disable_xorg_input_devices_on "$DISPLAY"
 openbox-session
