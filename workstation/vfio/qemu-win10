@@ -21,12 +21,6 @@ vfio_gpu_device='0000:03:00.0'
 vfio_gpu_audio='0000:03:00.1'
 vfio_usb_device='0000:02:00.0'
 
-export QEMU_AUDIO_DRV=alsa
-export QEMU_ALSA_DAC_PERIOD_SIZE=512
-export QEMU_ALSA_DAC_BUFFER_SIZE=1024
-export QEMU_ALSA_ADC_PERIOD_SIZE=512
-export QEMU_ALSA_ADC_BUFFER_SIZE=1024
-export QEMU_AUDIO_TIMER_PERIOD=50
 export QEMU_PA_SERVER=/run/user/5000/pulse/native
 
 if rmmod nvidia_drm nvidia_modeset nvidia 2>&1 | grep -q 'in use'; then
@@ -102,7 +96,8 @@ function default_boot {
         -net nic,model=virtio \
         -net tap,ifname=win10,script=no,downscript=no \
         \
-        -device AC97 \
+        -device intel-hda \
+        -device hda-duplex \
         \
         -qmp unix:"$monitor_dev",server,nowait &
 }
