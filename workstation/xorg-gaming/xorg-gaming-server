@@ -30,6 +30,8 @@ fi
 # Kill existing Synergy servers just in case there are some out there.
 cd $(dirname "$0")
 ../single-monitor
+synergys --config "$DOTFILE_DIR/gaming/desktop-synergy.conf"
 xinit ./xorg-gaming-session -- :10 -config "$gaming_xorg_conf" -sharevts
+pkill synergys
 ./swap-input-to-primary
 ../dual-monitor
