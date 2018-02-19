@@ -1,0 +1,9 @@
+#!/bin/bash
+
+cd "$(dirname "$0")"
+source monitorsrc
+
+./single-monitor
+hdmi/hdmisw.py "$gaming_monitor_console_hdmi_input"
+obs
+./dual-monitor

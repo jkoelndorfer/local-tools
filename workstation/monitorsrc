@@ -8,5 +8,6 @@ gaming_monitor_position='right-of'
 
 gaming_monitor_linux_hdmi_input=1
 gaming_monitor_vfio_hdmi_input=2
+gaming_monitor_console_hdmi_input=4
 
 # vim: ft=sh
