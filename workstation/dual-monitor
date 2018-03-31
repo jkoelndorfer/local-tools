@@ -5,3 +5,7 @@ source monitorsrc
 
 hdmi/hdmisw.py "$gaming_monitor_linux_hdmi_input"
 xrandr --output "$gaming_monitor" --auto --"$gaming_monitor_position" "$primary_monitor"
+
+# Running xrandr again after a short delay is required to get the monitor to display again in some cases.
+sleep 3
+xrandr
