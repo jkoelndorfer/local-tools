@@ -2,6 +2,16 @@
 
 set -m
 
+RC_DRIVER_UNLOAD_FAILED=1
+RC_MUST_RUN_AS_ROOT=2
+RC_RUNAS_USER_NOT_DEFINED=3
+RC_RUNAS_USER_NONEXISTENT=4
+
+if [[ "$UID" -ne 0 ]]; then
+    echo 'You must run this script as root.' >&2
+    exit "$RC_MUST_RUN_AS_ROOT"
+fi
+
 cd "$(dirname "$0")"
 # User to run the virtual machine as
 runas="$SUDO_USER"
@@ -21,11 +31,21 @@ vfio_gpu_device='0000:03:00.0'
 vfio_gpu_audio='0000:03:00.1'
 vfio_usb_device='0000:02:00.0'
 
+if [[ -z "$runas" ]]; then
+    echo 'runas user not defined.' >&2
+    exit "$RC_RUNAS_USER_NOT_DEFINED"
+fi
+
+if [[ -z "$runas_user_home" ]]; then
+    echo "Could not get home for runas user $runas." >&2
+    exit "$RC_RUNAS_USER_NONEXISTENT"
+fi
+
 export QEMU_PA_SERVER="/run/user/$(id -u "$runas")/pulse/native"
 
 if rmmod nvidia_drm nvidia_modeset nvidia 2>&1 | grep -q 'in use'; then
     echo 'Failed to remove NVIDIA kernel modules, is the GPU in use?' >&2
-    exit 1
+    exit "$RC_DRIVER_UNLOAD_FAILED"
 fi
 
 rmmod vfio_pci
