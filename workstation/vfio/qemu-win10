@@ -21,7 +21,7 @@ vfio_gpu_device='0000:03:00.0'
 vfio_gpu_audio='0000:03:00.1'
 vfio_usb_device='0000:02:00.0'
 
-export QEMU_PA_SERVER=/run/user/5000/pulse/native
+export QEMU_PA_SERVER="/run/user/$(id -u "$runas")/pulse/native"
 
 if rmmod nvidia_drm nvidia_modeset nvidia 2>&1 | grep -q 'in use'; then
     echo 'Failed to remove NVIDIA kernel modules, is the GPU in use?' >&2
