@@ -8,4 +8,4 @@ xrandr --output "$gaming_monitor" --auto --"$gaming_monitor_position" "$primary_
 
 # Running xrandr again after a short delay is required to get the monitor to display again in some cases.
 sleep 3
-xrandr
+xrandr >/dev/null 2>&1
