@@ -50,6 +50,10 @@ fi
 
 rmmod vfio_pci
 for dev in $vfio_gpu_device $vfio_gpu_audio; do
+    echo "$dev" > /sys/bus/pci/devices/$dev/driver/unbind
+    while [[ -d "/sys/bus/pci/devices/$dev/driver" ]]; do
+        sleep 0.1
+    done
     echo "vfio-pci" > /sys/bus/pci/devices/$dev/driver_override
 done
 modprobe vfio_pci

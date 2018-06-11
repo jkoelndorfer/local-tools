@@ -19,6 +19,15 @@ if sudo rmmod vfio_pci 2>&1 | grep -q 'in use'; then
 fi
 if ! lsmod | grep -q 'nvidia'; then
     sudo bash <<EOF
+        echo 1 > /sys/bus/pci/devices/$gpu_device/remove
+        echo 1 > /sys/bus/pci/devices/$gpu_audio_device/remove
+        while [[ -d /sys/bus/pci/devices/$gpu_device ]]; do
+            sleep 0.1
+        done
+        echo 1 > /sys/bus/pci/rescan
+        while ! [[ -d /sys/bus/pci/devices/$gpu_device ]]; do
+            sleep 1
+        done
         echo '' > /sys/bus/pci/devices/$gpu_device/driver_override
         echo '' > /sys/bus/pci/devices/$gpu_audio_device/driver_override
         modprobe nvidia
