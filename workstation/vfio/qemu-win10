@@ -144,7 +144,7 @@ pkill synergys
 ../single-monitor
 sudo -u "$runas" -i /bin/bash -c 'synergys --config "$DOTFILE_DIR/gaming/desktop-synergy.conf"'
 configure_networking
-systemctl start smbd
+systemctl start smb
 default_boot
 wait_for_monitor
 ./cpupin.py --iothread-cpus 2 --smp-cpus 4,6,8,10 "$monitor_dev"
