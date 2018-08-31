@@ -17,24 +17,31 @@ if sudo rmmod vfio_pci 2>&1 | grep -q 'in use'; then
     echo 'Failed to remove vfio_pci module, is the GPU in use?'
     exit 1
 fi
-if ! lsmod | grep -q 'nvidia'; then
-    sudo bash <<EOF
-        echo 1 > /sys/bus/pci/devices/$gpu_device/remove
-        echo 1 > /sys/bus/pci/devices/$gpu_audio_device/remove
-        while [[ -d /sys/bus/pci/devices/$gpu_device ]]; do
-            sleep 0.1
-        done
-        echo 1 > /sys/bus/pci/rescan
-        while ! [[ -d /sys/bus/pci/devices/$gpu_device ]]; do
-            sleep 1
-        done
-        echo '' > /sys/bus/pci/devices/$gpu_device/driver_override
-        echo '' > /sys/bus/pci/devices/$gpu_audio_device/driver_override
-        modprobe nvidia
-        modprobe nvidia_modeset
-        modprobe nvidia_drm
-EOF
+
+# It seems that Nvidia has some issues firing up an X server if we don't always
+# reset before using it. I discovered that when I was unable to launch my X11
+# gaming server after booting, but VFIO seemed to work fine. Then, to my surprise,
+# X11 also worked fine after the VFIO virtual machine had booted.
+if sudo rmmod nvidia_drm nvidia_modeset nvidia 2>&1 | grep -q 'in use'; then
+    echo 'Failed to remove the nvidia module, is the GPU in use?' >&2
+    exit 1
 fi
+sudo bash <<EOF
+    echo 1 > /sys/bus/pci/devices/$gpu_device/remove
+    echo 1 > /sys/bus/pci/devices/$gpu_audio_device/remove
+    while [[ -d /sys/bus/pci/devices/$gpu_device ]]; do
+        sleep 0.1
+    done
+    echo 1 > /sys/bus/pci/rescan
+    while ! [[ -d /sys/bus/pci/devices/$gpu_device ]]; do
+        sleep 1
+    done
+    echo '' > /sys/bus/pci/devices/$gpu_device/driver_override
+    echo '' > /sys/bus/pci/devices/$gpu_audio_device/driver_override
+    modprobe nvidia
+    modprobe nvidia_modeset
+    modprobe nvidia_drm
+EOF
 
 # Kill existing Synergy servers just in case there are some out there.
 cd $(dirname "$0")
