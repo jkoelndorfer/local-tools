@@ -10,7 +10,7 @@ disable_xorg_input_devices_on "$DISPLAY"
 feh --bg-center "$HOME/ownCloud/personal/data/wallpapers/space/WallpaperFusion-a-long-way-from-home-3840x1080-M2.jpg"
 openbox &
 openbox_pid="$!"
-synergyc --name 'deathwing-gaming' localhost &
+synergyc --name 'deathwing-gaming' --debug DEBUG --log /dev/stderr --no-daemon localhost &
 synergyc_pid="$!"
 wait "$openbox_pid"
 kill "$synergyc_pid"
