@@ -26,7 +26,10 @@ if sudo rmmod nvidia_drm nvidia_modeset nvidia 2>&1 | grep -q 'in use'; then
     echo 'Failed to remove the nvidia module, is the GPU in use?' >&2
     exit 1
 fi
-sudo bash <<EOF
+sudo bash /dev/stdin "$gpu_device" "$gpu_audio_device" <<'EOF'
+    gpu_device="$1"
+    gpu_audio_device="$2"
+
     echo 1 > /sys/bus/pci/devices/$gpu_device/remove
     echo 1 > /sys/bus/pci/devices/$gpu_audio_device/remove
     while [[ -d /sys/bus/pci/devices/$gpu_device ]]; do
