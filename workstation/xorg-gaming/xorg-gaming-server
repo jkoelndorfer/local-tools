@@ -46,7 +46,18 @@ sudo bash /dev/stdin "$gpu_device" "$gpu_audio_device" <<'EOF'
     modprobe nvidia_drm
 EOF
 
-# Kill existing Synergy servers just in case there are some out there.
+# FIXME: Wait for the nvidia driver to initialize.
+# This needs further investigation, as I'm not 100% sure this is what is happening.
+#
+# Based on output from dmesg, I think it takes about a 1/4 second for the nvidia driver
+# to initialize fully. That's not sufficient time before X starts, which sometimes leaves
+# us with a busted X server. We can leave a little extra time here just in case things
+# get hairy.
+#
+# TODO: Is there a better way to do this? Can we detect when the driver has been fully
+# initialized aside from reading dmesg logs? That's gross.
+sleep 2
+
 cd $(dirname "$0")
 ../single-monitor
 synergys --debug DEBUG --log /dev/stderr --config "$DOTFILE_DIR/gaming/desktop-synergy.conf" --no-daemon &
