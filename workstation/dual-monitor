@@ -4,8 +4,7 @@ cd "$(dirname "$0")"
 source monitorsrc
 
 hdmi/hdmisw.py "$gaming_monitor_linux_hdmi_input"
-xrandr --output "$gaming_monitor" --auto --"$gaming_monitor_position" "$primary_monitor"
-
-# Running xrandr again after a short delay is required to get the monitor to display again in some cases.
+# We have to wait for the monitor to be rediscovered by the GPU before adjusting
+# the layout using xrandr.
 sleep 3
-xrandr >/dev/null 2>&1
+xrandr --output "$gaming_monitor" --auto --"$gaming_monitor_position" "$primary_monitor"
