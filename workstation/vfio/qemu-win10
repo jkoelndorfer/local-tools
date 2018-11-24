@@ -41,6 +41,7 @@ if [[ -z "$runas_user_home" ]]; then
     exit "$RC_RUNAS_USER_NONEXISTENT"
 fi
 
+export QEMU_AUDIO_DRV='pa'
 export QEMU_PA_SERVER="/run/user/$(id -u "$runas")/pulse/native"
 export PULSE_COOKIE="$runas_user_home/.config/pulse/cookie"
 
