@@ -42,6 +42,7 @@ if [[ -z "$runas_user_home" ]]; then
 fi
 
 export QEMU_PA_SERVER="/run/user/$(id -u "$runas")/pulse/native"
+export PULSE_COOKIE="$runas_user_home/.config/pulse/cookie"
 
 if rmmod nvidia_drm nvidia_modeset nvidia 2>&1 | grep -q 'in use'; then
     echo 'Failed to remove NVIDIA kernel modules, is the GPU in use?' >&2
