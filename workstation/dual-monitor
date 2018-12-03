@@ -8,3 +8,5 @@ hdmi/hdmisw.py "$gaming_monitor_linux_hdmi_input"
 # the layout using xrandr.
 sleep 3
 xrandr --output "$gaming_monitor" --auto --"$gaming_monitor_position" "$primary_monitor"
+sleep 1
+"$DOTFILE_DIR/i3/i3helpers"
